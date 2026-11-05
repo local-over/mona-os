@@ -1,0 +1,85 @@
+name: Mona OS CI & Desktop Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    name: Build & Test on Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pkg-config \
+            libfontconfig1-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            libegl1-mesa-dev \
+            xvfb \
+            scrot \
+            imagemagick
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cargo Check Workspace
+        run: cargo check --workspace --verbose
+
+      - name: Build Release Binaries
+        run: cargo build --release --workspace
+
+      - name: Test Headless GUI Launch on Virtual Display
+        run: |
+          Xvfb :99 -screen 0 1280x800x24 &
+          export DISPLAY=:99
+          sleep 2
+          
+          # Launch mona-shell
+          ./target/release/mona-shell &
+          MONA_PID=$!
+          sleep 4
+          
+          # Verify process is alive
+          if ps -p $MONA_PID > /dev/null; then
+            echo "SUCCESS: mona-shell is running cleanly on virtual display!"
+            scrot /tmp/mona_desktop.png || true
+            kill $MONA_PID || true
+          else
+            echo "ERROR: mona-shell terminated prematurely"
+            exit 1
+          fi
+
+      - name: Upload Desktop Screenshot Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mona-desktop-screenshot
+          path: /tmp/mona_desktop.png
+          if-no-files-found: ignore
+
+      - name: Upload Mona OS Release Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: mona-os-linux-x86_64
+          path: |
+            target/release/mona-shell
+            target/release/mona-terminal
+            target/release/mona-finder
+            target/release/mona-settings
+            target/release/mona-calculator
+            target/release/mona-notes
