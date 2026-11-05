@@ -1,0 +1,106 @@
+import { LineEdit, ScrollView } from "std-widgets.slint";
+
+export component TerminalWindow inherits Window {
+    title: "Terminal";
+    width: 680px;
+    height: 440px;
+    background: #141416;
+    default-font-family: "SF Mono, Menlo, Monaco, Courier New, monospace";
+
+    in property <string> window-title: "hassan — -zsh — 80×24";
+    in property <string> terminal-output: "";
+    in property <string> current-prompt: "hassan@mona ~ % ";
+
+    callback command-submitted(string);
+    callback close-window();
+
+    VerticalLayout {
+        spacing: 0px;
+
+        // --- 1. macOS Terminal Translucent Title Bar ---
+        Rectangle {
+            height: 32px;
+            background: #232326;
+            border-width: 1px;
+            border-color: #333338;
+
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                alignment: space-between;
+
+                // Traffic lights
+                HorizontalLayout {
+                    spacing: 8px;
+                    y: (parent.height - 12px) / 2;
+
+                    Rectangle {
+                        width: 12px;
+                        height: 12px;
+                        border-radius: 6px;
+                        background: #ff5f57;
+                        TouchArea { clicked => { root.close-window(); } }
+                    }
+                    Rectangle { width: 12px; height: 12px; border-radius: 6px; background: #febc2e; }
+                    Rectangle { width: 12px; height: 12px; border-radius: 6px; background: #28c840; }
+                }
+
+                // Centered Title
+                HorizontalLayout {
+                    spacing: 6px;
+                    y: (parent.height - 14px) / 2;
+                    Text { text: "📁"; font-size: 11px; vertical-alignment: center; }
+                    Text {
+                        text: root.window-title;
+                        font-size: 12px;
+                        font-weight: 500;
+                        color: #dddddd;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // Balance space
+                Rectangle { width: 40px; }
+            }
+        }
+
+        // --- 2. Live Terminal Output Body ---
+        Rectangle {
+            background: #101012;
+
+            VerticalLayout {
+                padding: 12px;
+                spacing: 8px;
+
+                // Scrollable Output Lines
+                ScrollView {
+                    content-height: text-view.height;
+
+                    text-view := Text {
+                        text: root.terminal-output;
+                        font-size: 13px;
+                        color: #f2f2f2;
+                        font-family: "SF Mono, Menlo, Monaco, monospace";
+                        wrap: word-wrap;
+                    }
+                }
+
+                // Command Input Line
+                HorizontalLayout {
+                    height: 32px;
+                    spacing: 8px;
+
+                    cmd-input := LineEdit {
+                        placeholder-text: "Type command (e.g. ls -la, uname -a, cargo test)...";
+                        font-size: 13px;
+
+                        accepted => {
+                            root.command-submitted(self.text);
+                            self.text = "";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

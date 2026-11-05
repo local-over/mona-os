@@ -1,0 +1,374 @@
+import { Slider } from "std-widgets.slint";
+
+component CategoryPill inherits Rectangle {
+    in property <string> icon: "⚙️";
+    in property <string> title: "General";
+    in property <bool> is-selected: false;
+    callback clicked();
+
+    height: 32px;
+    border-radius: 6px;
+    background: is-selected ? #007aff : touch.has-hover ? #2e2e33 : transparent;
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        alignment: start;
+
+        Text {
+            text: root.icon;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+
+        Text {
+            text: root.title;
+            font-size: 13px;
+            font-weight: 500;
+            color: root.is-selected ? #ffffff : #dddddd;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component SettingsWindow inherits Window {
+    title: "System Settings";
+    width: 760px;
+    height: 540px;
+    background: #18181a;
+    default-font-family: "SF Pro Text, -apple-system, Helvetica Neue, sans-serif";
+
+    in property <bool> dark-mode: true;
+    in property <string> wifi-ssid: "Mona-5G";
+    in property <bool> wifi-enabled: true;
+    in property <string> bluetooth-device: "AirPods Pro (2nd gen)";
+    in property <bool> bluetooth-enabled: true;
+    in property <int> volume-val: 65;
+    in property <int> brightness-val: 85;
+    in property <int> battery-percent: 100;
+    in property <int> active-cat: 0;
+
+    callback select-category(int);
+    callback toggle-dark-mode();
+    callback toggle-wifi();
+    callback toggle-bluetooth();
+    callback volume-changed(float);
+    callback close-window();
+
+    VerticalLayout {
+        spacing: 0px;
+
+        // Top Titlebar
+        Rectangle {
+            height: 36px;
+            background: #232326;
+            border-width: 1px;
+            border-color: #333338;
+
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                alignment: space-between;
+
+                HorizontalLayout {
+                    spacing: 8px;
+                    y: (parent.height - 12px) / 2;
+
+                    Rectangle {
+                        width: 12px;
+                        height: 12px;
+                        border-radius: 6px;
+                        background: #ff5f57;
+                        TouchArea { clicked => { root.close-window(); } }
+                    }
+                    Rectangle { width: 12px; height: 12px; border-radius: 6px; background: #febc2e; }
+                    Rectangle { width: 12px; height: 12px; border-radius: 6px; background: #28c840; }
+                }
+
+                Text {
+                    text: "System Settings";
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #eeeeee;
+                    vertical-alignment: center;
+                }
+
+                Rectangle { width: 40px; }
+            }
+        }
+
+        // Two-Column Body
+        HorizontalLayout {
+            spacing: 0px;
+
+            // Left Sidebar
+            Rectangle {
+                width: 220px;
+                background: #1e1e21;
+                border-width: 1px;
+                border-color: #2e2e33;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 6px;
+                    alignment: start;
+
+                    // User Profile Card
+                    Rectangle {
+                        height: 52px;
+                        border-radius: 8px;
+                        background: #27272b;
+
+                        HorizontalLayout {
+                            padding: 8px;
+                            spacing: 10px;
+
+                            Rectangle {
+                                width: 36px;
+                                height: 36px;
+                                border-radius: 18px;
+                                background: #ff9f0a;
+                                Text { text: "H"; color: #ffffff; font-size: 18px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                            }
+
+                            VerticalLayout {
+                                alignment: center;
+                                spacing: 2px;
+                                Text { text: "Hassan"; font-size: 13px; font-weight: 600; color: #ffffff; }
+                                Text { text: "Apple Account"; font-size: 11px; color: #88888c; }
+                            }
+                        }
+                    }
+
+                    Rectangle { height: 6px; }
+
+                    CategoryPill { icon: "🎨"; title: "Appearance"; is-selected: root.active-cat == 0; clicked => { root.select-category(0); } }
+                    CategoryPill { icon: "📶"; title: "Wi-Fi"; is-selected: root.active-cat == 1; clicked => { root.select-category(1); } }
+                    CategoryPill { icon: "⚡"; title: "Bluetooth"; is-selected: root.active-cat == 2; clicked => { root.select-category(2); } }
+                    CategoryPill { icon: "🔊"; title: "Sound"; is-selected: root.active-cat == 3; clicked => { root.select-category(3); } }
+                    CategoryPill { icon: "🖥️"; title: "Displays"; is-selected: root.active-cat == 4; clicked => { root.select-category(4); } }
+                    CategoryPill { icon: "🔋"; title: "Battery"; is-selected: root.active-cat == 5; clicked => { root.select-category(5); } }
+                }
+            }
+
+            // Right Content Area
+            Rectangle {
+                background: #18181a;
+
+                VerticalLayout {
+                    padding: 28px;
+                    spacing: 20px;
+                    alignment: start;
+
+                    // Pane 0: Appearance
+                    if root.active-cat == 0: VerticalLayout {
+                        spacing: 16px;
+
+                        Text { text: "Appearance"; font-size: 22px; font-weight: 700; color: #ffffff; }
+
+                        Rectangle {
+                            height: 120px;
+                            border-radius: 10px;
+                            background: #232326;
+                            border-width: 1px;
+                            border-color: #333338;
+
+                            HorizontalLayout {
+                                padding: 16px;
+                                spacing: 24px;
+                                alignment: center;
+
+                                // Light Mode Preview Card
+                                Rectangle {
+                                    width: 130px;
+                                    height: 80px;
+                                    border-radius: 8px;
+                                    background: #e5e5ea;
+                                    border-width: !root.dark-mode ? 2px : 1px;
+                                    border-color: !root.dark-mode ? #007aff : #888888;
+
+                                    TouchArea { clicked => { if (root.dark-mode) { root.toggle-dark-mode(); } } }
+
+                                    VerticalLayout {
+                                        padding: 8px;
+                                        spacing: 4px;
+                                        Rectangle { height: 12px; background: #ffffff; border-radius: 3px; }
+                                        Text { text: "Light"; font-size: 11px; font-weight: 600; color: #000000; horizontal-alignment: center; }
+                                    }
+                                }
+
+                                // Dark Mode Preview Card
+                                Rectangle {
+                                    width: 130px;
+                                    height: 80px;
+                                    border-radius: 8px;
+                                    background: #1c1c1e;
+                                    border-width: root.dark-mode ? 2px : 1px;
+                                    border-color: root.dark-mode ? #007aff : #444444;
+
+                                    TouchArea { clicked => { if (!root.dark-mode) { root.toggle-dark-mode(); } } }
+
+                                    VerticalLayout {
+                                        padding: 8px;
+                                        spacing: 4px;
+                                        Rectangle { height: 12px; background: #2c2c2e; border-radius: 3px; }
+                                        Text { text: "Dark"; font-size: 11px; font-weight: 600; color: #ffffff; horizontal-alignment: center; }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Accent Color Group
+                        Rectangle {
+                            height: 60px;
+                            border-radius: 10px;
+                            background: #232326;
+                            border-width: 1px;
+                            border-color: #333338;
+
+                            HorizontalLayout {
+                                padding-left: 16px;
+                                padding-right: 16px;
+                                alignment: space-between;
+
+                                Text { text: "Accent color"; font-size: 13px; color: #ffffff; vertical-alignment: center; }
+
+                                HorizontalLayout {
+                                    spacing: 8px;
+                                    y: (parent.height - 18px) / 2;
+
+                                    Rectangle { width: 18px; height: 18px; border-radius: 9px; background: #007aff; }
+                                    Rectangle { width: 18px; height: 18px; border-radius: 9px; background: #af52de; }
+                                    Rectangle { width: 18px; height: 18px; border-radius: 9px; background: #ff2d55; }
+                                    Rectangle { width: 18px; height: 18px; border-radius: 9px; background: #ff9500; }
+                                    Rectangle { width: 18px; height: 18px; border-radius: 9px; background: #34c759; }
+                                }
+                            }
+                        }
+                    }
+
+                    // Pane 1: Wi-Fi
+                    if root.active-cat == 1: VerticalLayout {
+                        spacing: 16px;
+                        Text { text: "Wi-Fi"; font-size: 22px; font-weight: 700; color: #ffffff; }
+
+                        Rectangle {
+                            height: 64px;
+                            border-radius: 10px;
+                            background: #232326;
+                            border-width: 1px;
+                            border-color: #333338;
+
+                            HorizontalLayout {
+                                padding: 16px;
+                                alignment: space-between;
+                                Text { text: "Wi-Fi"; font-size: 14px; color: #ffffff; vertical-alignment: center; }
+
+                                Rectangle {
+                                    width: 44px;
+                                    height: 26px;
+                                    border-radius: 13px;
+                                    background: root.wifi-enabled ? #34c759 : #3a3a3c;
+                                    TouchArea { clicked => { root.toggle-wifi(); } }
+
+                                    Rectangle {
+                                        width: 22px;
+                                        height: 22px;
+                                        border-radius: 11px;
+                                        background: #ffffff;
+                                        x: root.wifi-enabled ? 20px : 2px;
+                                        y: 2px;
+                                        animate x { duration: 150ms; easing: ease-out; }
+                                    }
+                                }
+                            }
+                        }
+
+                        if root.wifi-enabled: Rectangle {
+                            height: 52px;
+                            border-radius: 10px;
+                            background: #232326;
+                            border-width: 1px;
+                            border-color: #333338;
+
+                            HorizontalLayout {
+                                padding: 14px;
+                                alignment: space-between;
+                                HorizontalLayout {
+                                    spacing: 10px;
+                                    Text { text: "✓"; color: #007aff; font-weight: 700; vertical-alignment: center; }
+                                    Text { text: root.wifi-ssid; font-size: 14px; font-weight: 600; color: #ffffff; vertical-alignment: center; }
+                                }
+                                Text { text: "🔒 Connected"; font-size: 12px; color: #88888c; vertical-alignment: center; }
+                            }
+                        }
+                    }
+
+                    // Pane 3: Sound
+                    if root.active-cat == 3: VerticalLayout {
+                        spacing: 16px;
+                        Text { text: "Sound"; font-size: 22px; font-weight: 700; color: #ffffff; }
+
+                        Rectangle {
+                            height: 70px;
+                            border-radius: 10px;
+                            background: #232326;
+                            border-width: 1px;
+                            border-color: #333338;
+
+                            VerticalLayout {
+                                padding: 14px;
+                                spacing: 8px;
+
+                                HorizontalLayout {
+                                    alignment: space-between;
+                                    Text { text: "Output volume"; font-size: 13px; color: #ffffff; }
+                                    Text { text: root.volume-val + "%"; font-size: 13px; color: #88888c; }
+                                }
+
+                                Slider {
+                                    value: root.volume-val;
+                                    minimum: 0;
+                                    maximum: 100;
+                                    changed(val) => { root.volume-changed(val); }
+                                }
+                            }
+                        }
+                    }
+
+                    // Pane 5: Battery
+                    if root.active-cat == 5: VerticalLayout {
+                        spacing: 16px;
+                        Text { text: "Battery"; font-size: 22px; font-weight: 700; color: #ffffff; }
+
+                        Rectangle {
+                            height: 80px;
+                            border-radius: 10px;
+                            background: #232326;
+                            border-width: 1px;
+                            border-color: #333338;
+
+                            HorizontalLayout {
+                                padding: 16px;
+                                alignment: space-between;
+
+                                VerticalLayout {
+                                    spacing: 4px;
+                                    Text { text: "Battery Level"; font-size: 14px; font-weight: 600; color: #ffffff; }
+                                    Text { text: "Fully Charged • Power Source: Power Adapter"; font-size: 12px; color: #88888c; }
+                                }
+
+                                Text { text: "100%"; font-size: 24px; font-weight: 700; color: #34c759; vertical-alignment: center; }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

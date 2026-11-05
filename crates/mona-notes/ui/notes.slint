@@ -1,0 +1,293 @@
+export struct NoteEntry {
+    id: string,
+    title: string,
+    snippet: string,
+    date-str: string,
+    is-selected: bool,
+}
+
+export struct ChecklistData {
+    index: int,
+    text: string,
+    is-completed: bool,
+}
+
+export component NotesWindow inherits Window {
+    title: "Notes";
+    width: 780px;
+    height: 520px;
+    background: #1e1e20;
+    default-font-family: "SF Pro Text, -apple-system, Helvetica Neue, sans-serif";
+
+    in property <[NoteEntry]> notes-list: [];
+    in property <string> active-title: "Mona Desktop Architecture";
+    in property <string> active-body: "Mona is a barebones window manager and production desktop environment stack.";
+    in property <string> active-date: "Today at 12:30 AM";
+    in property <[ChecklistData]> active-checklists: [];
+
+    callback select-note(int);
+    callback new-note-clicked();
+    callback delete-note-clicked();
+    callback toggle-checklist(int);
+    callback close-window();
+
+    VerticalLayout {
+        spacing: 0px;
+
+        // --- 1. Top Window Chrome & Toolbar ---
+        Rectangle {
+            height: 38px;
+            background: #2a2a2d;
+            border-width: 1px;
+            border-color: #38383c;
+
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                spacing: 14px;
+                alignment: space-between;
+
+                // Traffic lights
+                HorizontalLayout {
+                    spacing: 8px;
+                    alignment: start;
+                    y: (parent.height - 12px) / 2;
+
+                    Rectangle {
+                        width: 12px;
+                        height: 12px;
+                        border-radius: 6px;
+                        background: #ff5f57;
+                        TouchArea { clicked => { root.close-window(); } }
+                    }
+                    Rectangle { width: 12px; height: 12px; border-radius: 6px; background: #febc2e; }
+                    Rectangle { width: 12px; height: 12px; border-radius: 6px; background: #28c840; }
+                }
+
+                // Action buttons (New Note, Delete)
+                HorizontalLayout {
+                    spacing: 10px;
+                    alignment: end;
+                    y: (parent.height - 24px) / 2;
+
+                    // New Note Button (+)
+                    Rectangle {
+                        width: 28px;
+                        height: 24px;
+                        border-radius: 6px;
+                        background: new-touch.pressed ? #404044 : new-touch.has-hover ? #38383c : transparent;
+                        new-touch := TouchArea { clicked => { root.new-note-clicked(); } }
+                        Text { text: "✎"; color: #ff9f0a; font-size: 14px; vertical-alignment: center; horizontal-alignment: center; }
+                    }
+
+                    // Delete Note Button
+                    Rectangle {
+                        width: 28px;
+                        height: 24px;
+                        border-radius: 6px;
+                        background: del-touch.pressed ? #404044 : del-touch.has-hover ? #38383c : transparent;
+                        del-touch := TouchArea { clicked => { root.delete-note-clicked(); } }
+                        Text { text: "🗑"; color: #88888c; font-size: 13px; vertical-alignment: center; horizontal-alignment: center; }
+                    }
+                }
+            }
+        }
+
+        // --- 2. 3-Pane Notes Layout ---
+        HorizontalLayout {
+            spacing: 0px;
+
+            // Pane 1: Folders Sidebar
+            Rectangle {
+                width: 170px;
+                background: #1e1e21;
+                border-width: 1px;
+                border-color: #333336;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 8px;
+                    alignment: start;
+
+                    Text { text: "iCloud"; font-size: 11px; font-weight: 600; color: #88888c; }
+
+                    Rectangle {
+                        height: 28px;
+                        border-radius: 6px;
+                        background: #333338;
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            alignment: space-between;
+                            Text { text: "📁 All iCloud"; font-size: 13px; color: #ffffff; vertical-alignment: center; }
+                            Text { text: "3"; font-size: 12px; color: #88888c; vertical-alignment: center; }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 28px;
+                        border-radius: 6px;
+                        background: transparent;
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            alignment: space-between;
+                            Text { text: "📁 Notes"; font-size: 13px; color: #cccccc; vertical-alignment: center; }
+                            Text { text: "2"; font-size: 12px; color: #88888c; vertical-alignment: center; }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 28px;
+                        border-radius: 6px;
+                        background: transparent;
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            alignment: space-between;
+                            Text { text: "📁 Quick Notes"; font-size: 13px; color: #cccccc; vertical-alignment: center; }
+                            Text { text: "1"; font-size: 12px; color: #88888c; vertical-alignment: center; }
+                        }
+                    }
+                }
+            }
+
+            // Pane 2: Notes List Column
+            Rectangle {
+                width: 220px;
+                background: #18181a;
+                border-width: 1px;
+                border-color: #333336;
+
+                VerticalLayout {
+                    padding: 8px;
+                    spacing: 6px;
+                    alignment: start;
+
+                    // Search input pill
+                    Rectangle {
+                        height: 26px;
+                        border-radius: 6px;
+                        background: #2a2a2e;
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            Text { text: "🔍 Search"; font-size: 12px; color: #77777c; vertical-alignment: center; }
+                        }
+                    }
+
+                    // Notes Cards List
+                    for item[idx] in root.notes-list: Rectangle {
+                        height: 64px;
+                        border-radius: 8px;
+                        background: item.is-selected ? #ff9f0a22 : item-touch.has-hover ? #252528 : transparent;
+                        border-width: item.is-selected ? 1px : 0px;
+                        border-color: #ff9f0a55;
+
+                        item-touch := TouchArea {
+                            clicked => { root.select-note(idx); }
+                        }
+
+                        VerticalLayout {
+                            padding: 8px;
+                            spacing: 4px;
+
+                            Text {
+                                text: item.title;
+                                font-size: 13px;
+                                font-weight: 600;
+                                color: item.is-selected ? #ffffff : #eeeeee;
+                                overflow: elide;
+                            }
+
+                            HorizontalLayout {
+                                spacing: 6px;
+                                Text { text: item.date-str; font-size: 11px; color: #88888c; }
+                                Text { text: item.snippet; font-size: 11px; color: #77777c; overflow: elide; }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Pane 3: Note Editor & Checklist Canvas
+            Rectangle {
+                background: #1e1e20;
+
+                VerticalLayout {
+                    padding: 24px;
+                    spacing: 12px;
+                    alignment: start;
+
+                    // Note Title
+                    Text {
+                        text: root.active-title;
+                        font-size: 24px;
+                        font-weight: 700;
+                        color: #ffffff;
+                    }
+
+                    // Metadata date
+                    Text {
+                        text: root.active-date;
+                        font-size: 12px;
+                        color: #77777c;
+                    }
+
+                    // Body preview text
+                    Text {
+                        text: root.active-body;
+                        font-size: 14px;
+                        color: #dddddd;
+                        wrap: word-wrap;
+                    }
+
+                    // Interactive Checklists
+                    Rectangle { height: 8px; }
+                    Text { text: "Tasks & Verification:"; font-size: 13px; font-weight: 600; color: #ff9f0a; }
+
+                    for check in root.active-checklists: Rectangle {
+                        height: 28px;
+                        background: transparent;
+
+                        HorizontalLayout {
+                            spacing: 10px;
+                            alignment: start;
+
+                            // Checkbox circle
+                            Rectangle {
+                                width: 18px;
+                                height: 18px;
+                                border-radius: 9px;
+                                border-width: 1.5px;
+                                border-color: check.is-completed ? #ff9f0a : #66666a;
+                                background: check.is-completed ? #ff9f0a : transparent;
+                                y: (parent.height - 18px) / 2;
+
+                                check-touch := TouchArea {
+                                    clicked => { root.toggle-checklist(check.index); }
+                                }
+
+                                if check.is-completed: Text {
+                                    text: "✓";
+                                    font-size: 12px;
+                                    color: #000000;
+                                    font-weight: 800;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+
+                            // Checklist label
+                            Text {
+                                text: check.text;
+                                font-size: 13px;
+                                color: check.is-completed ? #88888c : #ffffff;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

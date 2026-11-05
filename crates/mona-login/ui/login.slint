@@ -1,0 +1,174 @@
+import { LineEdit } from "std-widgets.slint";
+
+export component LoginWindow inherits Window {
+    title: "Mona Login";
+    width: 1024px;
+    height: 640px;
+    background: #181528;
+    default-font-family: "SF Pro Text, -apple-system, Helvetica Neue, sans-serif";
+
+    in property <string> username: "Hassan";
+    in property <string> time-str: "12:45 AM";
+    in property <string> date-str: "Thursday, November 5";
+    in property <length> shake-offset: 0px;
+    in property <bool> is-failed: false;
+
+    callback password-submitted(string);
+    callback shutdown-clicked();
+    callback restart-clicked();
+    callback sleep-clicked();
+
+    // Background Wallpaper Gradient
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: @linear-gradient(135deg, #2b1f48 0%, #1e2850 50%, #46253c 100%);
+    }
+
+    // Top Clock Cluster
+    VerticalLayout {
+        padding-top: 48px;
+        spacing: 4px;
+        alignment: start;
+
+        Text {
+            text: root.time-str;
+            font-size: 54px;
+            font-weight: 300;
+            color: #ffffff;
+            horizontal-alignment: center;
+        }
+
+        Text {
+            text: root.date-str;
+            font-size: 16px;
+            font-weight: 500;
+            color: #e0e0e8;
+            horizontal-alignment: center;
+        }
+    }
+
+    // Center Avatar & Password Pod
+    VerticalLayout {
+        alignment: center;
+        spacing: 14px;
+        x: root.shake-offset;
+
+        // Avatar Circle
+        Rectangle {
+            width: 80px;
+            height: 80px;
+            border-radius: 40px;
+            background: #ff9f0a;
+            border-width: 2px;
+            border-color: #ffffff44;
+            x: (parent.width - 80px) / 2;
+
+            Text {
+                text: "H";
+                font-size: 38px;
+                font-weight: 700;
+                color: #ffffff;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        // Real Name
+        Text {
+            text: root.username;
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+            horizontal-alignment: center;
+        }
+
+        // Password Input Pill
+        Rectangle {
+            width: 220px;
+            height: 34px;
+            border-radius: 17px;
+            background: #ffffff33;
+            border-width: 1px;
+            border-color: root.is-failed ? #ff453a : #ffffff55;
+            x: (parent.width - 220px) / 2;
+
+            HorizontalLayout {
+                padding-left: 14px;
+                padding-right: 8px;
+                alignment: space-between;
+
+                pwd-input := LineEdit {
+                    width: 160px;
+                    placeholder-text: "Enter Password";
+                    input-type: password;
+                    font-size: 13px;
+
+                    accepted => {
+                        root.password-submitted(self.text);
+                        self.text = "";
+                    }
+                }
+
+                // Submit Arrow Button (→)
+                Rectangle {
+                    width: 22px;
+                    height: 22px;
+                    border-radius: 11px;
+                    background: #ffffff44;
+                    y: (parent.height - 22px) / 2;
+
+                    TouchArea {
+                        clicked => {
+                            root.password-submitted(pwd-input.text);
+                            pwd-input.text = "";
+                        }
+                    }
+
+                    Text {
+                        text: "→";
+                        color: #ffffff;
+                        font-size: 13px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+
+    // Bottom Power Actions (Sleep, Restart, Shut Down)
+    HorizontalLayout {
+        y: parent.height - 48px;
+        spacing: 24px;
+        alignment: center;
+
+        Rectangle {
+            width: 70px;
+            height: 28px;
+            border-radius: 6px;
+            background: #ffffff15;
+            TouchArea { clicked => { root.sleep-clicked(); } }
+            Text { text: "Sleep"; color: #ffffff; font-size: 12px; horizontal-alignment: center; vertical-alignment: center; }
+        }
+
+        Rectangle {
+            width: 70px;
+            height: 28px;
+            border-radius: 6px;
+            background: #ffffff15;
+            TouchArea { clicked => { root.restart-clicked(); } }
+            Text { text: "Restart"; color: #ffffff; font-size: 12px; horizontal-alignment: center; vertical-alignment: center; }
+        }
+
+        Rectangle {
+            width: 76px;
+            height: 28px;
+            border-radius: 6px;
+            background: #ffffff15;
+            TouchArea { clicked => { root.shutdown-clicked(); } }
+            Text { text: "Shut Down"; color: #ffffff; font-size: 12px; horizontal-alignment: center; vertical-alignment: center; }
+        }
+    }
+}

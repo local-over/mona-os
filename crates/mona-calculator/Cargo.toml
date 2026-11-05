@@ -1,0 +1,11 @@
+[package]
+name = "mona-calculator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+slint = { workspace = true }
+anyhow = { workspace = true }
+
+[build-dependencies]
+slint-build = "1.18.1"

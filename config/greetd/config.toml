@@ -1,0 +1,20 @@
+# ==============================================================================
+# MONA OS — BAREBONES LOGIN MANAGER (GREETD DAEMON CONFIGURATION)
+# Bridges systemd/PAM to the Mona macOS Login Window
+# ==============================================================================
+
+[terminal]
+# The initial VT that will be used. Defaults to that of greetd's cgroup.
+vt = 1
+
+[default_session]
+# Launch Hyprland with an isolated greet environment running mona-login
+command = "Hyprland --config /etc/mona/hypr/login.conf"
+
+# The user to run the greeter as
+user = "_greeter"
+
+[initial_session]
+# Optional auto-login can be configured here
+# command = "Hyprland --config ~/.config/hypr/hyprland.conf"
+# user = "hassan"

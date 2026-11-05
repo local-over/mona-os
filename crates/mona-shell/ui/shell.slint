@@ -1,0 +1,319 @@
+import { LineEdit, Slider } from "std-widgets.slint";
+
+component DockItem inherits Rectangle {
+    in property <string> icon: "📁";
+    in property <string> name: "App";
+    in property <color> tile-color: #007aff;
+    in property <bool> is-running: false;
+    callback clicked();
+
+    width: touch.has-hover ? 58px : 46px;
+    height: touch.has-hover ? 58px : 46px;
+    border-radius: self.height * 0.22;
+    background: tile-color;
+    animate width, height { duration: 150ms; easing: ease-out; }
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+    }
+
+    Text {
+        text: root.icon;
+        font-size: parent.height * 0.52;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+export component ShellWindow inherits Window {
+    title: "Mona Shell";
+    width: 1280px;
+    height: 800px;
+    background: transparent;
+    default-font-family: "SF Pro Text, -apple-system, Helvetica Neue, sans-serif";
+
+    in property <string> active-app-title: "Finder";
+    in property <string> time-str: "Thu Nov 5  12:55 AM";
+    in property <bool> apple-menu-open: false;
+    in property <bool> control-center-open: false;
+    in property <bool> spotlight-open: false;
+    in property <bool> wifi-enabled: true;
+    in property <bool> bluetooth-enabled: true;
+    in property <bool> dark-mode: true;
+    in property <int> volume-val: 65;
+    in property <int> brightness-val: 85;
+
+    callback toggle-apple-menu();
+    callback toggle-control-center();
+    callback toggle-spotlight();
+    callback launch-app(string);
+    callback toggle-dark-mode();
+
+    // 1. Wallpaper Backdrop
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        background: @linear-gradient(135deg, #2b1f48 0%, #1e2850 50%, #46253c 100%);
+    }
+
+    // 2. Top Global Menu Bar (24pt height)
+    Rectangle {
+        y: 0px;
+        height: 24px;
+        background: root.dark-mode ? #18181be6 : #f2f2f7e6;
+        border-width: 1px;
+        border-color: root.dark-mode ? #2e2e33 : #d1d1d6;
+
+        HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            alignment: space-between;
+
+            // Left Section: Apple Logo + Menus
+            HorizontalLayout {
+                spacing: 16px;
+                alignment: start;
+
+                //  Logo
+                Rectangle {
+                    width: 16px;
+                    TouchArea { clicked => { root.toggle-apple-menu(); } }
+                    Text { text: ""; font-size: 14px; color: root.dark-mode ? #ffffff : #000000; vertical-alignment: center; }
+                }
+
+                // Active App Title (Bold)
+                Text {
+                    text: root.active-app-title;
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: root.dark-mode ? #ffffff : #000000;
+                    vertical-alignment: center;
+                }
+
+                Text { text: "File"; font-size: 13px; color: root.dark-mode ? #e5e5ea : #1c1c1e; vertical-alignment: center; }
+                Text { text: "Edit"; font-size: 13px; color: root.dark-mode ? #e5e5ea : #1c1c1e; vertical-alignment: center; }
+                Text { text: "View"; font-size: 13px; color: root.dark-mode ? #e5e5ea : #1c1c1e; vertical-alignment: center; }
+                Text { text: "Window"; font-size: 13px; color: root.dark-mode ? #e5e5ea : #1c1c1e; vertical-alignment: center; }
+                Text { text: "Help"; font-size: 13px; color: root.dark-mode ? #e5e5ea : #1c1c1e; vertical-alignment: center; }
+            }
+
+            // Right Section: Status Tray Cluster
+            HorizontalLayout {
+                spacing: 14px;
+                alignment: end;
+
+                // Battery
+                HorizontalLayout {
+                    spacing: 4px;
+                    Text { text: "100%"; font-size: 11px; color: root.dark-mode ? #e5e5ea : #1c1c1e; vertical-alignment: center; }
+                    Text { text: "🔋"; font-size: 12px; vertical-alignment: center; }
+                }
+
+                // Wi-Fi
+                Text { text: "📶"; font-size: 12px; vertical-alignment: center; }
+
+                // Search (Spotlight)
+                Rectangle {
+                    width: 16px;
+                    TouchArea { clicked => { root.toggle-spotlight(); } }
+                    Text { text: "🔍"; font-size: 11px; vertical-alignment: center; }
+                }
+
+                // Control Center [CC]
+                Rectangle {
+                    width: 28px;
+                    height: 18px;
+                    border-radius: 4px;
+                    background: root.control-center-open ? #007aff : transparent;
+                    y: (parent.height - 18px) / 2;
+                    TouchArea { clicked => { root.toggle-control-center(); } }
+                    Text { text: "[CC]"; font-size: 10px; font-weight: 700; color: root.control-center-open ? #ffffff : #007aff; horizontal-alignment: center; vertical-alignment: center; }
+                }
+
+                // Date & Time
+                Text {
+                    text: root.time-str;
+                    font-size: 12px;
+                    color: root.dark-mode ? #ffffff : #000000;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+
+    // 3. Apple Menu Popup
+    if root.apple-menu-open: Rectangle {
+        x: 10px;
+        y: 28px;
+        width: 190px;
+        height: 170px;
+        border-radius: 8px;
+        background: #252528ee;
+        border-width: 1px;
+        border-color: #38383c;
+
+        VerticalLayout {
+            padding: 8px;
+            spacing: 4px;
+
+            Rectangle {
+                height: 24px;
+                border-radius: 4px;
+                TouchArea { clicked => { root.toggle-apple-menu(); } }
+                Text { text: "About This Mac"; font-size: 13px; color: #ffffff; x: 8px; vertical-alignment: center; }
+            }
+
+            Rectangle {
+                height: 24px;
+                border-radius: 4px;
+                TouchArea { clicked => { root.launch-app("Settings"); root.toggle-apple-menu(); } }
+                Text { text: "System Settings..."; font-size: 13px; color: #ffffff; x: 8px; vertical-alignment: center; }
+            }
+
+            Rectangle { height: 1px; background: #38383c; }
+
+            Rectangle {
+                height: 24px;
+                border-radius: 4px;
+                TouchArea { clicked => { root.toggle-apple-menu(); } }
+                Text { text: "Sleep"; font-size: 13px; color: #ffffff; x: 8px; vertical-alignment: center; }
+            }
+
+            Rectangle {
+                height: 24px;
+                border-radius: 4px;
+                TouchArea { clicked => { root.toggle-apple-menu(); } }
+                Text { text: "Restart..."; font-size: 13px; color: #ffffff; x: 8px; vertical-alignment: center; }
+            }
+
+            Rectangle {
+                height: 24px;
+                border-radius: 4px;
+                TouchArea { clicked => { root.toggle-apple-menu(); } }
+                Text { text: "Shut Down..."; font-size: 13px; color: #ffffff; x: 8px; vertical-alignment: center; }
+            }
+        }
+    }
+
+    // 4. Control Center Popup
+    if root.control-center-open: Rectangle {
+        x: parent.width - 320px;
+        y: 30px;
+        width: 305px;
+        height: 240px;
+        border-radius: 14px;
+        background: #202024ee;
+        border-width: 1px;
+        border-color: #38383c;
+
+        VerticalLayout {
+            padding: 14px;
+            spacing: 12px;
+
+            Text { text: "Control Center"; font-size: 13px; font-weight: 700; color: #ffffff; }
+
+            // Wi-Fi and Bluetooth Pods
+            HorizontalLayout {
+                spacing: 10px;
+
+                Rectangle {
+                    height: 52px;
+                    border-radius: 10px;
+                    background: root.wifi-enabled ? #007aff : #333336;
+                    HorizontalLayout {
+                        padding: 10px;
+                        spacing: 8px;
+                        Text { text: "📶"; font-size: 16px; vertical-alignment: center; }
+                        VerticalLayout {
+                            alignment: center;
+                            Text { text: "Wi-Fi"; font-size: 12px; font-weight: 600; color: #ffffff; }
+                            Text { text: "Mona-5G"; font-size: 10px; color: #e0e0e8; }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    height: 52px;
+                    border-radius: 10px;
+                    background: root.bluetooth-enabled ? #007aff : #333336;
+                    HorizontalLayout {
+                        padding: 10px;
+                        spacing: 8px;
+                        Text { text: "⚡"; font-size: 16px; vertical-alignment: center; }
+                        VerticalLayout {
+                            alignment: center;
+                            Text { text: "Bluetooth"; font-size: 12px; font-weight: 600; color: #ffffff; }
+                            Text { text: "On"; font-size: 10px; color: #e0e0e8; }
+                        }
+                    }
+                }
+            }
+
+            // Display Brightness Slider
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "Display"; font-size: 11px; color: #88888c; }
+                Slider { value: root.brightness-val; minimum: 0; maximum: 100; }
+            }
+
+            // Sound Volume Slider
+            VerticalLayout {
+                spacing: 4px;
+                Text { text: "Sound"; font-size: 11px; color: #88888c; }
+                Slider { value: root.volume-val; minimum: 0; maximum: 100; }
+            }
+        }
+    }
+
+    // 5. Spotlight Search HUD
+    if root.spotlight-open: Rectangle {
+        x: (parent.width - 560px) / 2;
+        y: 120px;
+        width: 560px;
+        height: 54px;
+        border-radius: 14px;
+        background: #1e1e24ee;
+        border-width: 1px;
+        border-color: #38383c;
+
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            spacing: 12px;
+
+            Text { text: "🔍"; font-size: 18px; vertical-alignment: center; }
+
+            LineEdit {
+                placeholder-text: "Spotlight Search";
+                font-size: 18px;
+            }
+        }
+    }
+
+    // 6. The Frosted Glass Dock (Bottom Shelf)
+    Rectangle {
+        y: parent.height - 76px;
+        height: 64px;
+        border-radius: 18px;
+        background: #ffffff28;
+        border-width: 1px;
+        border-color: #ffffff33;
+        x: (parent.width - self.width) / 2;
+        width: 420px;
+
+        HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            spacing: 12px;
+            alignment: center;
+
+            DockItem { icon: "📁"; name: "Finder"; tile-color: #1047a9; clicked => { root.launch-app("Finder"); } }
+            DockItem { icon: "🚀"; name: "Launchpad"; tile-color: #3a3a3c; clicked => { root.toggle-spotlight(); } }
+            DockItem { icon: "📝"; name: "Notes"; tile-color: #e5881c; clicked => { root.launch-app("Notes"); } }
+            DockItem { icon: "🔢"; name: "Calculator"; tile-color: #ff9500; clicked => { root.launch-app("Calculator"); } }
+            DockItem { icon: ">_"; name: "Terminal"; tile-color: #1c1c1e; clicked => { root.launch-app("Terminal"); } }
+            DockItem { icon: "⚙️"; name: "Settings"; tile-color: #555555; clicked => { root.launch-app("Settings"); } }
+            DockItem { icon: "🗑"; name: "Trash"; tile-color: #777777; clicked => { root.launch-app("Finder"); } }
+        }
+    }
+}
